@@ -1115,11 +1115,17 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
     def render(self, *args, **kwargs):
         content = self.markup(self.process(*args, **kwargs))
 
-        # insert tag authors around names content
+        has_substitute = self.substitute() != None
+
         if content:
-            return '<authors>{}</authors>'.format(content)
+            if has_substitute:
+                # authors tag already was inserted
+                return content
+            else:
+                # insert tag authors around names content
+                return '<authors>{}</authors>'.format(content)
         else:
-            None
+            return None
 
 
 class Name(CitationStylesElement, Formatted, Affixed, Delimited):
