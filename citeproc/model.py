@@ -730,6 +730,7 @@ class Text(CitationStylesElement, FormatNumber, Formatted, Affixed, Quoted,
             tag = self.get('term')
             text = self._term(item)
         elif 'value' in self.attrib:
+            tag = 'value'
             text = String(self.preformat(self.get('value')))
 
         # return the tag
@@ -969,7 +970,7 @@ class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
             elif form == 'short':
                 text = str(date.year)[-2:]
 
-        return text
+        return '<{tag}>{content}</{tag}>'.format(tag=name, content=text)
 
     def markup(self, text):
         if text:
