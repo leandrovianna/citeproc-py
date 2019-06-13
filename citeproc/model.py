@@ -702,8 +702,12 @@ class Text(CitationStylesElement, FormatNumber, Formatted, Affixed, Quoted,
             return False
 
     def render(self, *args, **kwargs):
-        text, language = self.process(*args, **kwargs)
-        return self.markup(text, language)
+        text, language, tag = self.process(*args, **kwargs)
+        # verify if tag is non-none, so print the tag name
+        if tag:
+            return '<{tag}>{content}</{tag}>'.format(tag=tag, content=self.markup(text, language))
+        else:
+            return self.markup(text, language)
 
     def process(self, item, context=None, **kwargs):
         if context is None:
@@ -713,16 +717,23 @@ class Text(CitationStylesElement, FormatNumber, Formatted, Affixed, Quoted,
             language = item.reference.language[:2]
         except VariableError:
             language = self.get_root().get('default-locale', 'en')[:2]
+
+        # store the name of CSL variable or term, if applicable
+        tag = None
+
         if 'variable' in self.attrib:
+            tag = self.get('variable')
             text = self._variable(item, context)
         elif 'macro' in self.attrib:
             text = self.get_macro(self.get('macro')).render(item, context)
         elif 'term' in self.attrib:
+            tag = self.get('term')
             text = self._term(item)
         elif 'value' in self.attrib:
             text = String(self.preformat(self.get('value')))
 
-        return text, language
+        # return the tag
+        return text, language, tag
 
     def _variable(self, item, context):
         variable = self.get('variable')
@@ -889,6 +900,13 @@ class Date(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
         # TODO: fix
         return text
 
+    def render(self, *args, **kwargs):
+        content = self.markup(self.process(*args, **kwargs))
+        if content:
+            return '<date>{}</date>'.format(content)
+        else:
+            return None
+
 
 class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
                 StrippedPeriods):
@@ -1001,6 +1019,13 @@ class Number(CitationStylesElement, FormatNumber, Formatted, Affixed, Displayed,
         else:
             return None
 
+    def render(self, *args, **kwargs):
+        content = self.markup(self.process(*args, **kwargs))
+        if content:
+            return '<number>{}</number>'.format(content)
+        else:
+            return None
+
 
 class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
     def calls_variable(self):
@@ -1086,6 +1111,15 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
             return self.wrap(self.format(text))
         else:
             return None
+
+    def render(self, *args, **kwargs):
+        content = self.markup(self.process(*args, **kwargs))
+
+        # insert tag authors around names content
+        if content:
+            return '<authors>{}</authors>'.format(content)
+        else:
+            None
 
 
 class Name(CitationStylesElement, Formatted, Affixed, Delimited):
