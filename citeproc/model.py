@@ -1086,6 +1086,8 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
                     pass
                 output.append(text)
 
+        substitute_rendered = False
+
         if output:
             try:
                 total = sum(output)
@@ -1100,10 +1102,11 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
         else:
             substitute = self.substitute()
             if substitute is not None:
+                substitute_rendered = True
                 text = substitute.render(item, context=context, **kwargs)
 
         try:
-            return text
+            return text, substitute_rendered
         except NameError:
             raise VariableError
 
@@ -1114,12 +1117,11 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
             return None
 
     def render(self, *args, **kwargs):
-        content = self.markup(self.process(*args, **kwargs))
-
-        has_substitute = self.substitute() != None
+        content, substitute_rendered = self.process(*args, **kwargs)
+        content = self.markup(content)
 
         if content:
-            if has_substitute:
+            if substitute_rendered:
                 # authors tag already was inserted
                 return content
             else:
