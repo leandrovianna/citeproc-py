@@ -695,6 +695,7 @@ class FormatNumber(object):
 class XmlTag():
     def _escape(self, text):
         return str(text).replace(
+            ' ', '_').replace(
             '&', '&amp;').replace(
             '<', '&lt;').replace(
             '>', '&gt;')
