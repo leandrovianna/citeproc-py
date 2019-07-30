@@ -5,6 +5,7 @@ from citeproc.py2compat import *
 import re
 import unicodedata
 import os
+import html
 
 from functools import cmp_to_key
 from glob import glob
@@ -689,8 +690,16 @@ class FormatNumber(object):
         return str(number)
 
 
+class XmlTag():
+    def xmltag(self, text, tag):
+        if text:
+            return '<{0}>{1}</{0}>'.format(tag, html.escape(text))
+        else:
+            return None
+
+
 class Text(CitationStylesElement, FormatNumber, Formatted, Affixed, Quoted,
-           TextCased, StrippedPeriods):
+           TextCased, StrippedPeriods, XmlTag):
     generated_variables = ('year-suffix', 'citation-number')
 
     def calls_variable(self):
@@ -705,7 +714,7 @@ class Text(CitationStylesElement, FormatNumber, Formatted, Affixed, Quoted,
         text, language, tag = self.process(*args, **kwargs)
         # verify if tag is non-none, so print the tag name
         if tag:
-            return '<{tag}>{content}</{tag}>'.format(tag=tag, content=self.markup(text, language))
+            return self.xmltag(self.markup(text, language), tag)
         else:
             return self.markup(text, language)
 
@@ -904,13 +913,13 @@ class Date(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
     def render(self, *args, **kwargs):
         content = self.markup(self.process(*args, **kwargs))
         if content:
-            return '<date>{}</date>'.format(content)
+            return content
         else:
             return None
 
 
 class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
-                StrippedPeriods):
+                StrippedPeriods, XmlTag):
     def process(self, date, context=None):
         name = self.get('name')
         range_delimiter = self.get('range-delimiter', '-')
@@ -970,7 +979,7 @@ class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
             elif form == 'short':
                 text = str(date.year)[-2:]
 
-        return '<{tag}>{content}</{tag}>'.format(tag=name, content=text)
+        return self.xmltag(text, name)
 
     def markup(self, text):
         if text:
@@ -979,8 +988,8 @@ class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
             return None
 
 
-class Number(CitationStylesElement, FormatNumber, Formatted, Affixed, Displayed,
-             TextCased, StrippedPeriods):
+class Number(CitationStylesElement, FormatNumber, Formatted, Affixed,
+             Displayed, TextCased, StrippedPeriods, XmlTag):
     def calls_variable(self):
         return True
 
@@ -1023,12 +1032,13 @@ class Number(CitationStylesElement, FormatNumber, Formatted, Affixed, Displayed,
     def render(self, *args, **kwargs):
         content = self.markup(self.process(*args, **kwargs))
         if content:
-            return '<number>{}</number>'.format(content)
+            return self.xmltag(content, 'number')
         else:
             return None
 
 
-class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
+class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited,
+            XmlTag):
     def calls_variable(self):
         return True
 
@@ -1126,7 +1136,7 @@ class Names(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
                 return content
             else:
                 # insert tag authors around names content
-                return '<authors>{}</authors>'.format(content)
+                return self.xmltag(content, 'authors')
         else:
             return None
 
