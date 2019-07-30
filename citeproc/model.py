@@ -701,7 +701,8 @@ class XmlTag():
 
     def xmltag(self, text, tag):
         if text:
-            return '<{0}>{1}</{0}>'.format(tag, self._escape(text))
+            return '<{0}>{1}</{0}>'.format(tag.replace(' ', '_'),
+                                           self._escape(text))
         else:
             return None
 
