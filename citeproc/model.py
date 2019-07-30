@@ -30,7 +30,7 @@ class SomewhatObjectifiedElement(etree.ElementBase):
 
 
 class CitationStylesElement(SomewhatObjectifiedElement):
-    _default_options = {# global options
+    _default_options = {  # global options
                         'initialize-with-hyphen': 'true',
                         'page-range-format': None,
                         'demote-non-dropping-particle': 'display-and-sort',
@@ -68,7 +68,7 @@ class CitationStylesElement(SomewhatObjectifiedElement):
             element = self.xpath(xpath)[0]
             namespace, tag = element.tag.split('}', 1)
             attribs = ''.join(' {}="{}"'.format(key, value)
-                               for key, value in element.attrib.items())
+                              for key, value in element.attrib.items())
             tree.append('{:>4}: {}<{}{}>'.format(element.sourceline,
                                                  i * '  ', tag, attribs))
         print('\n'.join(tree))
@@ -106,7 +106,7 @@ class CitationStylesElement(SomewhatObjectifiedElement):
             for locale in self.get_root().locales:
                 try:
                     return locale.get_term(name, form)
-                except IndexError: # TODO: create custom exception
+                except IndexError:  # TODO: create custom exception
                     continue
 
     def get_date(self, form):
@@ -209,7 +209,7 @@ class FormattingInstructions(object):
 
 
 class Citation(FormattingInstructions, CitationStylesElement):
-    _default_options = {# disambiguation
+    _default_options = {  # disambiguation
                         'disambiguate-add-names': False,
                         'disambiguate-add-givenname': False,
                         'givenname-disambiguation-rule': 'all-names',
@@ -229,7 +229,7 @@ class Citation(FormattingInstructions, CitationStylesElement):
 
 
 class Bibliography(FormattingInstructions, CitationStylesElement):
-    _default_options = {# whitespace
+    _default_options = {  # whitespace
                         'hanging-indent': False,
                         'second-field-align': None,
                         'line-spacing': 1,
@@ -324,7 +324,7 @@ class Delimited(object):
         delimiter = self.get('delimiter', default_delimiter)
         try:
             text = join((s for s in strings if s is not None), delimiter)
-        except:
+        except BaseException:
             text = String('')
         return text
 
@@ -382,7 +382,7 @@ class TextCased(object):
                     if not text.isupper() and not word.isupper():
                         word = word.soft_lower()
                         if (str(word) not in self._stop_words or
-                            prev in (':', '.')):
+                                prev in (':', '.')):
                             word = word.capitalize_first()
                     prev = word[-1]
                     output.append(word)
@@ -430,6 +430,7 @@ class Sort(CitationStylesElement):
             lst = zip(items, *keys)
             comparers = [(itemgetter(i + 1), descending[i])
                          for i in range(len(keys))]
+
             def mycmp(left, right):
                 for getter, desc in comparers:
                     left_key, right_key = getter(left), getter(right)
@@ -514,8 +515,8 @@ class Key(CitationStylesElement):
         if names is not None:
             output = []
             for name in names:
-                demote_ndp = self.get_root().get('demote-non-dropping-particle',
-                                                 'display-and-sort').lower()
+                demote_ndp = self.get_root().get(
+                    'demote-non-dropping-particle', 'display-and-sort').lower()
                 sort_separator = self._default_options['sort-separator']
 
                 # TODO: encapsulate in function (to share with Name)
@@ -581,7 +582,7 @@ class Parent(object):
 class Macro(CitationStylesElement, Parent):
     def process(self, item, context=None, sort_options=None):
         return self.process_children(item, context=context,
-                                    sort_options=sort_options)
+                                     sort_options=sort_options)
 
     def render(self, item, context=None, sort_options=None):
         return self.render_children(item, context=context,
@@ -640,6 +641,7 @@ class FormatNumber(object):
                            or self.unicode_character('EN DASH'))
 
         en_dash = unicodedata.lookup('EN DASH')
+
         def format_number_or_range(item):
             try:
                 first, last = (number.strip() for number
@@ -668,7 +670,7 @@ class FormatNumber(object):
         range_format = self.get_root().get_option('page-range-format')
         common = find_common(first, last)
         if range_format == 'chicago':
-            m = re.search('\d+', first)
+            m = re.search(r'\d+', first)
             first_number = int(m.group())
             if first_number < 100 or first_number % 100 == 0:
                 range_format = 'expanded'
@@ -691,9 +693,15 @@ class FormatNumber(object):
 
 
 class XmlTag():
+    def _escape(self, text):
+        return str(text).replace(
+            '&', '&amp;').replace(
+            '<', '&lt;').replace(
+            '>', '&gt;')
+
     def xmltag(self, text, tag):
         if text:
-            return '<{0}>{1}</{0}>'.format(tag, html.escape(text))
+            return '<{0}>{1}</{0}>'.format(tag, self._escape(text))
         else:
             return None
 
@@ -827,12 +835,12 @@ class Date(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
                 same_show_parts.append('year')
                 try:
                     if ('month' in show_parts and
-                        date_range.begin.month == date_range.end.month):
+                            date_range.begin.month == date_range.end.month):
                         show_parts.remove('month')
                         same_show_parts.append('month')
                         try:
                             if ('day' in show_parts and
-                                date_range.begin.day == date_range.end.day):
+                                    date_range.begin.day == date_range.end.day):
                                 show_parts.remove('day')
                                 same_show_parts.append('day')
                         except AttributeError:
@@ -938,7 +946,7 @@ class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
             if (form == 'ordinal'
                 and self.get_locale_option('limit-day-ordinals-to-day-1')
                     .lower() == 'true'
-                and date.day > 1):
+                    and date.day > 1):
                 form = 'numeric'
 
             if form == 'numeric':
@@ -960,7 +968,9 @@ class Date_Part(CitationStylesElement, Formatted, Affixed, TextCased,
             if form == 'long':
                 text = context.get_term('{}-{:02}'.format(term, index)).single
             elif form == 'short':
-                term = context.get_term('{}-{:02}'.format(term, index), 'short')
+                term = context.get_term(
+                    '{}-{:02}'.format(term, index),
+                    'short')
                 text = term.single
             else:
                 assert term == 'month'
@@ -1147,7 +1157,7 @@ class Name(CitationStylesElement, Formatted, Affixed, Delimited):
             value = sort_options[name]
         except (TypeError, KeyError):
             expr = ('./ancestor::*[self::cs:citation or '
-                                  'self::cs:bibliography][1]')
+                    'self::cs:bibliography][1]')
             if context is None:
                 context = self
             parent = context.xpath_search(expr)[0]
@@ -1171,7 +1181,8 @@ class Name(CitationStylesElement, Formatted, Affixed, Delimited):
             result = self.get_term('et-al').single
         return result
 
-    def process(self, item, variable, context=None, sort_options=None, **kwargs):
+    def process(self, item, variable, context=None,
+                sort_options=None, **kwargs):
         def get_option(name):
             return self.get_option(name, context, sort_options)
 
@@ -1233,7 +1244,8 @@ class Name(CitationStylesElement, Formatted, Affixed, Delimited):
                             family = ' '.join([n for n in (ndp, family) if n])
                             given = ' '.join([n for n in (given, dp) if n])
                         else:
-                            given = ' '.join([n for n in (given, dp, ndp) if n])
+                            given = ' '.join(
+                                [n for n in (given, dp, ndp) if n])
 
                         given, family = format_name_parts(given, family)
                         order = family, given, suffix
@@ -1257,7 +1269,7 @@ class Name(CitationStylesElement, Formatted, Affixed, Delimited):
                     text = self.join(output, delimiter)
                 elif (delimiter_precedes_et_al == 'always' or
                       (delimiter_precedes_et_al == 'contextual' and
-                     len(output) >= 2)):
+                       len(output) >= 2)):
                     output.append(et_al)
                     text = self.join(output, delimiter)
                 else:
@@ -1267,7 +1279,7 @@ class Name(CitationStylesElement, Formatted, Affixed, Delimited):
                 if (delimiter_precedes_last == 'always' or
                     (delimiter_precedes_last == 'contextual' and
                      len(output) > 2)):
-                        text = self.join([text, ''])
+                    text = self.join([text, ''])
                 else:
                     text += ' '
                 text += '{} '.format(and_term) + output[-1]
@@ -1361,7 +1373,8 @@ class Label(CitationStylesElement, Formatted, Affixed, StrippedPeriods,
     def calls_variable(self):
         return self.get('variable') == 'locator'
 
-    def process(self, item, variable=None, plural=None, context=None, **kwargs):
+    def process(self, item, variable=None,
+                plural=None, context=None, **kwargs):
         if variable is None:
             variable = self.get('variable')
         form = self.get('form', 'long')
@@ -1378,7 +1391,7 @@ class Label(CitationStylesElement, Formatted, Affixed, StrippedPeriods,
             term = self.get_term(variable, form)
 
         if (plural_option == 'contextual' and plural or
-            plural_option == 'always'):
+                plural_option == 'always'):
             text = term.multiple
         else:
             text = term.single
@@ -1428,7 +1441,8 @@ class Group(CitationStylesElement, Parent, Formatted, Affixed, Delimited):
             except VariableError:
                 pass
         output = [item for item in output if item is not None]
-        success = not variable_called or (variable_called and variable_rendered)
+        success = not variable_called or (
+            variable_called and variable_rendered)
         if output and success:
             return self.join(output)
         else:
@@ -1589,7 +1603,7 @@ def to_ordinal(number, context):
 def romanize(n):
     # by Kay Schluehr - from http://billmill.org/python_roman.html
     numerals = (('M', 1000), ('CM', 900), ('D', 500), ('CD', 400),
-                ('C', 100),('XC', 90),('L', 50),('XL', 40), ('X', 10),
+                ('C', 100), ('XC', 90), ('L', 50), ('XL', 40), ('X', 10),
                 ('IX', 9), ('V', 5), ('IV', 4), ('I', 1))
     roman = []
     for ltr, num in numerals:
