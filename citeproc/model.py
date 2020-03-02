@@ -1370,7 +1370,7 @@ class Substitute(CitationStylesElement, Parent):
 
 
 class Label(CitationStylesElement, Formatted, Affixed, StrippedPeriods,
-            TextCased):
+            TextCased, XmlTag):
     def calls_variable(self):
         return self.get('variable') == 'locator'
 
@@ -1397,7 +1397,7 @@ class Label(CitationStylesElement, Formatted, Affixed, StrippedPeriods,
         else:
             text = term.single
 
-        return text
+        return self.xmltag(text, variable)
 
     def markup(self, text):
         if text:
